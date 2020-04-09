@@ -11,21 +11,87 @@ function Mat4x4Parallel(mat4x4, prp, srp, vup, clip) {
     // mat4x4.values = transform.values;
 }
 
-// set values of mat4x4 to the parallel projection / view matrix
+// set values of mat4x4 to the perspective projection / view matrix
 function Mat4x4Projection(mat4x4, prp, srp, vup, clip) {
     // 1. translate PRP to origin
+    let stepOne = new Matrix(4, 4);
+    let stepTwo = new Matrix(4, 4);
+    let stepThree = new Matrix(4, 4);
+    let stepFour = new Matrix(4, 4);
+
+    stepOne.values = [
+        [1, 0, 0, -prp.x],
+        [0, 1, 0, -prp.y],
+        [0, 0, 1, -prp.z],
+        [0, 0, 0,      1]
+    ];
     // 2. rotate VRC such that (u,v,n) align with (x,y,z)
+    let n = prp.subtract(srp);
+    n.normalize();
+
+    let u = vup.cross(n);
+    u.normalize();
+
+    let v = n.cross(u);
+
+    stepTwo.values = [
+        [u.x, u.y, u.z, 0],
+        [v.x, v.y, v.z, 0],
+        [n.x, n.y, n.z, 0],
+        [  0,   0,   0, 1]    
+    ]
     // 3. shear such that CW is on the z-axis
+    let [left, right, bottom, top, near, far] = clip;
+
+    let CW = Vector3((left+right)/2, (top+bottom)/2, -near);
+    let DOP = CW.subtract(Vector3(0, 0, 0));
+    //DOP IS VECTOR POINTING FROM CAMERA TOWARDS CENTER OF THE WINDOW, DEFINED USING VRC LEFT -U TOP +V NEAR -N
+
+    let shx = (-DOP.x / DOP.z);
+    let shy = (-DOP.y / DOP.z);
+
+    stepThree.values = [
+        [   1,   0, shx,  0],
+        [   0,   1, shy,  0],
+        [   0,   0,   1,  0],
+        [   0,   0,   0,  1]
+    ]
+
     // 4. scale such that view volume bounds are ([z,-z], [z,-z], [-1,zmin])
+    
+    let spx = (2 * near) / ((right - left) * far);
+    let spy = (2 * near) / ((top - bottom) * far);
+    let spz = 1 / (far - near)
+
+    stepFour.values = [
+        [spx,   0,   0,   0],
+        [  0, spy,   0,   0],
+        [  0,   0, spz,   0],
+        [  0,   0,   0,   1]
+    ]
 
     // ...
     // var transform = Matrix.multiply([...]);
     // mat4x4.values = transform.values;
+    console.log(stepOne.values);
+    console.log(stepTwo.values);
+    console.log(stepThree.values);
+    console.log(stepFour.values);
+
+    var transform = Matrix.multiply([stepFour, stepThree, stepTwo, stepOne])
+    mat4x4.values = transform.values;
+    console.log("transform.values");
+    console.log(transform.values);
 }
 
 // set values of mat4x4 to project a parallel image on the z=0 plane
 function Mat4x4MPar(mat4x4) {
-    // mat4x4.values = ...;
+    mat4x4.values = [
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 1]
+    ];
 }
 
 // set values of mat4x4 to project a perspective image on the z=-1 plane
