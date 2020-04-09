@@ -206,6 +206,14 @@ function OnKeyDown(event) {
             console.log("d")
             scene.view.prp = Vector3(scene.view.prp.x + v, scene.view.prp.y, scene.view.prp.z);
             break;
+        case 87: //W key
+            console.log("a")
+            scene.view.prp = Vector3(scene.view.prp.x, scene.view.prp.y + v, scene.view.prp.z);
+            break;
+        case 83: //S key
+            console.log("s")
+            scene.view.prp = Vector3(scene.view.prp.x, scene.view.prp.y - v, scene.view.prp.z);
+            break;
 
     }
 }
